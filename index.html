@@ -12,6 +12,944 @@
     <script type="module" crossorigin src="/assets/index-CbR4hI_Y.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-oFIe-nvj.css">
   </head>
+  <script>
+    
+const URLRestApi = "https://desarrollowebumg.azurewebsites.net/";
+
+document.addEventListener("DOMContentLoaded", function () {
+    Reload();
+    
+});
+
+function Reload()
+{
+    InicializarTipoEvento();
+    InicializarEventosCorporativos();
+    InicializarAsistentes();
+
+}
+function setCargando(IDComponente, Show) {
+    if (Show) {
+        var Cargando = `<div class="d-flex justify-content-center">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>`
+        document.getElementById(IDComponente).innerHTML = Cargando;
+    } else {
+        document.getElementById(IDComponente).innerHTML = '';
+    }
+    
+}
+
+
+$(document).ready(function () {
+    $("#tipoevento-input-search").on("keyup", function () {
+        var value = $(this).val().toLowerCase();
+        $("#BodyTablaTipoEvento tr").filter(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    $("#eventoscorporativos-input-search").on("keyup", function () {
+        var value = $(this).val().toLowerCase();
+        $("#BodyTablaEventosCorporativos tr").filter(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+
+    $("#asistente-evento-input-search").on("keyup", function () {
+        var value = $(this).val().toLowerCase();
+        $("#BodyTablaAsistentes tr").filter(function () {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+        });
+    });
+    
+});
+
+function selectFirstOptionById(selectId) {
+    var selectElement = document.getElementById(selectId);
+    if (selectElement) {
+        selectElement.selectedIndex = 0;
+    }
+}
+
+function seleccionarValor(IdSelect, value) {
+    var select = document.getElementById(IdSelect);
+    for (var i = 0; i < select.options.length; i++) {
+        if (select.options[i].text === value) {
+            select.selectedIndex = i;
+            break;
+        }
+    }
+}
+
+function getDate(inputId) {
+    const input = document.getElementById(inputId);
+    if (input && input.value) {
+        // El valor del input ya está en formato yyyy-mm-dd
+        const [year, month, day] = input.value.split('-'); // Dividir la fecha
+        return `${year}${month}${day}`; // Formatear como yyyymmdd
+    } else {
+        console.error("Input no encontrado o vacío.");
+    }
+    return null; // Retorna null si no se puede procesar
+}
+
+function setDate(idInputDate, fechaFormato) {
+    // Validar que el ID del input exista
+    let inputDate = document.getElementById(idInputDate);
+    if (!inputDate) {
+        console.error(`El elemento con ID "${idInputDate}" no existe.`);
+        return;
+    }
+
+    // Separar la fecha en dd-mm-yyyy
+    let partes = fechaFormato.split("-");
+    if (partes.length !== 3) {
+        console.error("El formato de la fecha debe ser dd-mm-yyyy.");
+        return;
+    }
+
+    // Asignar valores de día, mes y año
+    let dia = partes[0];
+    let mes = partes[1];
+    let anio = partes[2];
+
+    // Validar que los valores sean números válidos
+    if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
+        console.error("La fecha contiene valores no numéricos.");
+        return;
+    }
+
+    // Formatear la fecha en formato yyyy-mm-dd para el input date
+    let fechaFormateada = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+
+    // Establecer la fecha en el input
+    inputDate.value = fechaFormateada;
+    console.log(`Fecha establecida en el input "${idInputDate}": ${fechaFormateada}`);
+}
+
+function getValue(IdComponente) {
+    var valor = document.getElementById(IdComponente).value;
+    //console.log(valor); // Muestra el valor del input en la consola
+    return valor;
+}
+
+
+function setValue(IdComponente,valor) {
+    document.getElementById(IdComponente).value = valor;
+    //console.log(valor); // Muestra el valor del input en la consola
+    return true;
+}
+
+
+function getValueSelect(selectId) {
+    // Obtener el elemento select por su ID
+    var selectElement = document.getElementById(selectId);
+
+    // Obtener el índice del elemento seleccionado
+    var selectedIndex = selectElement.selectedIndex;
+
+    // Comprobar si el índice es 0 (primer valor)
+    if (selectedIndex === 0) {
+        return null;
+    }
+
+    // Obtener el valor seleccionado
+    var selectedValue = selectElement.options[selectedIndex].value;
+
+    return selectedValue;
+}
+
+
+function checkEmpty(id) {
+    var element = document.getElementById(id);
+    if (element.tagName === 'INPUT') {
+        return element.value !== '';
+    } else if (element.tagName === 'SELECT') {
+        return element.value !== '' && element.value !== element.options[0].value;
+    } else if (element.tagName === 'TEXTAREA') {
+        return element.value.trim() !== ''; // Verificar si el valor del textarea no está vacío
+    }
+    return false; // Si no es ni input, ni select, ni textarea
+}
+
+
+function setEstadoCheckbox(idCheckbox, estado, deshabilitar) {
+    var checkbox = document.getElementById(idCheckbox);
+
+    if (estado === true) {
+        checkbox.checked = true; // Marcar el checkbox si estado es true
+    } else {
+        checkbox.checked = false; // Desmarcar el checkbox si estado es false
+    }
+
+    if (deshabilitar === false) {
+        checkbox.disabled = false;
+    } else {
+        checkbox.disabled = true;
+    }
+}
+
+
+function SweetError(Mensaje) {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+    Toast.fire({
+        icon: "error",
+        showClass: {
+            popup: `
+      animate__animated
+      animate__fadeInUp
+      animate__faster
+    `
+        },
+        hideClass: {
+            popup: `
+      animate__animated
+      animate__fadeOutDown
+      animate__faster
+    `
+        },
+        title: 'Oops...',
+        text: Mensaje
+
+    });
+}
+
+
+function SweetCompleteTopCenter(Mensaje) {
+    Swal.fire({
+        position: 'top-center',
+        icon: 'success',
+        title: Mensaje,
+        showClass: {
+            popup: `
+      animate__animated
+      animate__fadeInUp
+      animate__faster
+    `
+        },
+        hideClass: {
+            popup: `
+      animate__animated
+      animate__fadeOutDown
+      animate__faster
+    `
+        },
+        showConfirmButton: false,
+        timer: 1500
+    })
+}
+
+function setFocus(id) {
+    const input = document.getElementById(id);
+    if (input) {
+        input.focus();
+    } else {
+        console.error(`No se encontró ningún elemento con el id: ${id}`);
+    }
+}
+
+function borrarOpcionesSelect(IdSelect) {
+    var selectElement = document.getElementById(IdSelect);
+    while (selectElement.options.length > 1) {
+        selectElement.remove(selectElement.options.length - 1);
+    }
+}
+
+function InicializarTipoEvento(){
+    setEstadoCheckbox('Crear-TipoEvento-Check',true,false);
+    setEstadoCheckbox('Editar-TipoEvento-Check',false,true);
+    getTipoDeEvento();
+    setValue('tipoevento-input-nombre',"");
+    setValue('tipoevento-input-descripcion',"");
+    setValue('tipoevento-btn-guardar',"");
+}
+
+
+function getTipoDeEvento() {
+    console.log("Me estoy ejecutando");
+    setCargando('tipoevento-load', true);
+
+    
+
+    fetch(URLRestApi + "api/getTiposEvento", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((Data) => {
+            console.log(Data);
+            let HTML = '';
+            for (let i = 0; i < Data.length; i++) {
+                HTML += `
+                    <tr>
+                        <td class="text-center">${Data[i].NombreTipoEvento}</td>
+                        <td class="text-center">${Data[i].Descripcion}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#1e385d" onclick="CargarEditarTipoEvento(${Data[i].IdTipoEvento},'${Data[i].NombreTipoEvento}','${Data[i].Descripcion}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#b71c1c" onclick="setDeleteTipoDeEvento(${Data[i].IdTipoEvento},'${Data[i].NombreTipoEvento}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>`;
+            }
+            setCargando('tipoevento-load', false);
+            document.getElementById('BodyTablaTipoEvento').innerHTML = HTML;
+        })
+        .catch((error) => {
+            SweetError('Error: ' + error.message);
+            setCargando('tipoevento-load', false);
+        });
+}
+
+function CargarEditarTipoEvento(IdTipoEvento,TipoEvento,Descripcion){
+    setEstadoCheckbox('Crear-TipoEvento-Check',false,false);
+    setEstadoCheckbox('Editar-TipoEvento-Check',true,false);
+    setValue('tipoevento-input-nombre',TipoEvento);
+    setFocus('tipoevento-input-nombre');
+    setValue('tipoevento-input-descripcion',Descripcion);
+    setValue('tipoevento-btn-guardar',IdTipoEvento);
+}
+
+
+function setDeleteTipoDeEvento(v_IdTipoEvento,Nombre) {
+    Swal.fire({
+        title: "¿Está seguro de que desea eliminar : " + Nombre + "?",
+        text: '',
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(URLRestApi+ `api/setDeleteEvento?IdTipoEvento=${v_IdTipoEvento}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                }
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((Data) => {
+                    try {
+                        if (Data != null) {
+                            if (Data[0].Estado) {
+                                SweetCompleteTopCenter(Data[0].Mensaje);
+                                Reload();
+                            } else {
+                                SweetError(Data[0].Mensaje);
+                            }
+                        }
+                    } catch (e) {
+                   
+                    }
+                    
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    // Opcional: SweetError("Ha ocurrido un error inesperado en la operación");
+                });
+        }
+    });
+}
+
+
+
+function SaveTipoEvento() {
+    if (checkEmpty('tipoevento-input-nombre')) {
+        // Obtén los valores antes de construir la URL
+        var v_IdTipoEvento = getValue('tipoevento-btn-guardar') || null;
+        var v_NombreTipoEvento = getValue('tipoevento-input-nombre');
+        var v_Descripcion = getValue('tipoevento-input-descripcion') || null;
+
+        // Log para verificar los valores antes de la petición
+        console.log("Valores a enviar:", {
+            IdTipoEvento: v_IdTipoEvento,
+            NombreTipoEvento: v_NombreTipoEvento,
+            Descripcion: v_Descripcion
+        });
+
+        // Construir la URL con los parámetros
+        let url = `${URLRestApi}api/setEventos?`;
+
+        // Añadir los parámetros solo si no son null o vacíos
+        if (v_IdTipoEvento !== null) {
+            url += `IdTipoEvento=${encodeURIComponent(v_IdTipoEvento)}&`;
+        }
+        if (v_NombreTipoEvento !== "") {
+            url += `NombreTipoEvento=${encodeURIComponent(v_NombreTipoEvento)}&`;
+        }
+        if (v_Descripcion !== null) {
+            url += `Descripcion=${encodeURIComponent(v_Descripcion)}&`;
+        }
+
+        // Eliminar el último `&` si existe
+        if (url.endsWith('&')) {
+            url = url.slice(0, -1);
+        }
+
+        // Log para verificar la URL final
+        console.log("URL final:", url);
+
+        // Realizar la petición GET
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json; charset=utf-8"
+            }
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((Data) => {
+                try {
+                    if (Data != null) {
+                        if (Data[0].Estado) {
+                            SweetCompleteTopCenter(Data[0].Mensaje);
+                            Reload();
+                        } else {
+                            SweetError(Data[0].Mensaje);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al procesar la respuesta:", e);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    } else {
+        SweetError('El campo Tipo de Evento está vacío.');
+    }
+}
+
+function InicializarEventosCorporativos(){
+    getEventosCorporativos();
+    getTipoEventoSelect('eventoscorporativos-select');
+    setEstadoCheckbox('Crear-EventosCorporativos-Check',true,false);
+    setEstadoCheckbox('Editar-EventosCorporativos-Check',false,true);
+    setValue('eventoscorporativos-nombre',"");
+    setValue('eventoscorporativos-lugar',"");
+    setValue('eventoscorporativos-fecha',"");
+    setValue('eventoscorporativos-btn-guardar',"");
+}
+
+
+function getTipoEventoSelect(IdSelect) {
+    borrarOpcionesSelect(IdSelect)
+    fetch(URLRestApi + "api/getTiposEvento", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((Data) => {
+            try {
+                var select = document.getElementById(IdSelect);
+                for (var i = 0; i < Data.length; i++) {
+                    var option = document.createElement("option");
+                    option.text = Data[i].NombreTipoEvento;
+                    option.value = Data[i].IdTipoEvento;
+                    select.add(option);
+                }
+            } catch (e) {
+
+            }
+        })
+        .catch((error) => {
+            SweetError('Error: ' + error.message);
+        });
+   
+}
+
+
+function getEventosCorporativos() {
+    setCargando('eventoscorporativos-load', true);
+    fetch(URLRestApi + "api/getEventosCorporativos", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((Data) => {
+            console.log(Data);
+            let HTML = '';
+            for (let i = 0; i < Data.length; i++) {
+                HTML += `
+                    <tr>
+                        <td class="text-center">${Data[i].NombreTipoEvento}</td>
+                        <td class="text-center">${Data[i].NombreEvento}</td>
+                        <td class="text-center">${Data[i].Ubicacion}</td>
+                        <td class="text-center">${Data[i].FechaEvento}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#1e385d" onclick="CargarEditarEventoCorporativo(${Data[i].IdEvento},'${Data[i].NombreTipoEvento}','${Data[i].NombreEvento}','${Data[i].Ubicacion}','${Data[i].FechaEvento}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#b71c1c" onclick="setDeleteEventoCorporativo(${Data[i].IdEvento},'${Data[i].NombreEvento}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>`;
+            }
+            setCargando('eventoscorporativos-load', false);
+            document.getElementById('BodyTablaEventosCorporativos').innerHTML = HTML;
+        })
+        .catch((error) => {
+            SweetError('Error: ' + error.message);
+            setCargando('eventoscorporativos-load', false);
+        });
+}
+
+
+function CargarEditarEventoCorporativo(IdEventoCorporativo,NombreTipoEvento,NombreEvento,Ubicacion,FechaEvento){
+    setEstadoCheckbox('Crear-EventosCorporativos-Check',false,false);
+    setEstadoCheckbox('Editar-EventosCorporativos-Check',true,false);
+    seleccionarValor('eventoscorporativos-select',NombreTipoEvento);
+    setValue('eventoscorporativos-nombre',NombreEvento);
+    setValue('eventoscorporativos-lugar',Ubicacion);
+    setDate('eventoscorporativos-fecha',FechaEvento);
+    setValue('eventoscorporativos-btn-guardar',IdEventoCorporativo);
+}
+
+function SaveEventoCorporativo() {
+    // Verificar que el campo 'tipoevento-input-nombre' no esté vacío
+    if (checkEmpty('eventoscorporativos-select')) {
+        if (checkEmpty('eventoscorporativos-nombre')) {
+            if (checkEmpty('eventoscorporativos-fecha')) {
+                if (checkEmpty('eventoscorporativos-lugar')) {
+        // Obtén los valores antes de construir la URL
+        var v_IdEvento = Number(getValue('eventoscorporativos-btn-guardar')) || null;
+        var v_NombreEvento = getValue('eventoscorporativos-nombre');
+        var v_FechaEvento = getDate('eventoscorporativos-fecha') || null;
+        var v_Ubicacion = getValue('eventoscorporativos-lugar') || null;
+        var v_IdTipoEvento = Number(getValueSelect('eventoscorporativos-select') )|| null;
+
+        // Log para verificar los valores antes de la petición
+        console.log("Valores a enviar:", {
+            IdEvento: v_IdEvento,
+            NombreEvento: v_NombreEvento,
+            FechaEvento: v_FechaEvento,
+            Ubicacion: v_Ubicacion,
+            IdTipoEvento: v_IdTipoEvento
+        });
+
+        // Construir la URL con los parámetros
+        let url = `${URLRestApi}api/setEventosCorporativos?`;
+
+        // Añadir los parámetros solo si no son null o vacíos
+        if (v_IdEvento !== null) {
+            url += `IdEvento=${encodeURIComponent(v_IdEvento)}&`;
+        }
+        if (v_NombreEvento !== "") {
+            url += `NombreEvento=${encodeURIComponent(v_NombreEvento)}&`;
+        }
+        if (v_FechaEvento !== null) {
+            url += `FechaEvento=${encodeURIComponent(v_FechaEvento)}&`;
+        }
+        if (v_Ubicacion !== null) {
+            url += `Ubicacion=${encodeURIComponent(v_Ubicacion)}&`;
+        }
+        if (v_IdTipoEvento !== null) {
+            url += `IdTipoEvento=${encodeURIComponent(v_IdTipoEvento)}&`;
+        }
+
+        // Eliminar el último `&` si existe
+        if (url.endsWith('&')) {
+            url = url.slice(0, -1);
+        }
+
+        // Log para verificar la URL final
+        console.log("URL final:", url);
+
+        // Realizar la petición GET
+        fetch(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json; charset=utf-8"
+            }
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((Data) => {
+                try {
+                    if (Data != null) {
+                        if (Data[0].Estado) {
+                            SweetCompleteTopCenter(Data[0].Mensaje);
+                            Reload();
+                        } else {
+                            SweetError(Data[0].Mensaje);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al procesar la respuesta:", e);
+                }
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+        } else {
+            SweetError('El campo Lugar se encuentra vacío.');
+        }
+        } else {
+            SweetError('El campo fecha se encuentra vacío.');
+        }
+        } else {
+            SweetError('El campo nombre se encuentra vacío.');
+        }
+    } else {
+        SweetError('Selecciona un tipo de evento.');
+    }
+}
+
+
+
+function setDeleteEventoCorporativo(IdEvento,NombreEvento) {
+    Swal.fire({
+        title: "¿Está seguro de que desea eliminar : " + NombreEvento + "?",
+        text: '',
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(URLRestApi+ `api/setDeleteEventosCorporativos?IdEvento=${IdEvento}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                }
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((Data) => {
+                    try {
+                        if (Data != null) {
+                            if (Data[0].Estado) {
+                                SweetCompleteTopCenter(Data[0].Mensaje);
+                                Reload();
+                            } else {
+                                SweetError(Data[0].Mensaje);
+                            }
+                        }
+                    } catch (e) {
+                   
+                    }
+                    
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    // Opcional: SweetError("Ha ocurrido un error inesperado en la operación");
+                });
+        }
+    });
+}
+
+
+
+
+function InicializarAsistentes(){
+    getAsistentes();
+    getEventoSelect('asistente-evento-select');
+    setEstadoCheckbox('Crear-Asistentes-Check',true,false);
+    setEstadoCheckbox('Editar-Asistentes-Check',false,true);
+    setValue('asistente-evento-nombre',"");
+    setValue('asistente-evento-correo',"");
+    setValue('asistente-evento-telefono',"");
+    setValue('asistente-evento-btn-guardar',"");
+}
+
+function CargarEditarAsistentes(IdAsistente,NombreEvento,NombreAsistente,CorreoAsistente,Telefono){
+    setEstadoCheckbox('Crear-Asistentes-Check',false,false);
+    setEstadoCheckbox('Editar-Asistentes-Check',true,false);
+    seleccionarValor('asistente-evento-select',NombreEvento);
+    setValue('asistente-evento-nombre',NombreAsistente);
+    setValue('asistente-evento-correo',CorreoAsistente);
+    setValue('asistente-evento-telefono',Telefono);
+    setValue('asistente-evento-btn-guardar',IdAsistente);
+}
+
+function getEventoSelect(IdSelect) {
+    borrarOpcionesSelect(IdSelect)
+    fetch(URLRestApi + "api/getEventosCorporativos", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((Data) => {
+            try {
+                var select = document.getElementById(IdSelect);
+                for (var i = 0; i < Data.length; i++) {
+                    var option = document.createElement("option");
+                    option.text = Data[i].NombreEvento;
+                    option.value = Data[i].IdEvento;
+                    select.add(option);
+                }
+            } catch (e) {
+
+            }
+        })
+        .catch((error) => {
+            SweetError('Error: ' + error.message);
+        });
+   
+}
+
+function getAsistentes() {
+    setCargando('asistentes-load', true);
+
+    
+
+    fetch(URLRestApi + "api/getAsistentes", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        }
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((Data) => {
+            console.log(Data);
+            let HTML = '';
+            for (let i = 0; i < Data.length; i++) {
+                HTML += `
+                    <tr>
+                        <td class="text-center">${Data[i].NombreEvento}</td>
+                        <td class="text-center">${Data[i].NombreAsistente}</td>
+                        <td class="text-center">${Data[i].CorreoAsistente}</td>
+                        <td class="text-center">${Data[i].Telefono}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#1e385d" onclick="CargarEditarAsistentes(${Data[i].IdAsistente},'${Data[i].NombreEvento}','${Data[i].NombreAsistente}','${Data[i].CorreoAsistente}','${Data[i].Telefono}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-primary btn-sm" style="background-color:#b71c1c" onclick="setDeleteAsistentes(${Data[i].IdAsistente},'${Data[i].NombreAsistente}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>`;
+            }
+            setCargando('asistentes-load', false);
+            document.getElementById('BodyTablaAsistentes').innerHTML = HTML;
+        })
+        .catch((error) => {
+            SweetError('Error: ' + error.message);
+            setCargando('asistentes-load', false);
+        });
+}
+
+
+function SaveAsistente() {
+    if (checkEmpty('asistente-evento-nombre')) {
+        if (checkEmpty('asistente-evento-correo')) {
+            if (checkEmpty('asistente-evento-telefono')) {
+                if (checkEmpty('asistente-evento-select')) {
+
+                    // Obtén los valores antes de construir la URL
+                    var v_IdAsistente = Number(getValue('asistente-evento-btn-guardar')) || null;
+                    var v_NombreAsistente = getValue('asistente-evento-nombre');
+                    var v_CorreoAsistente = getValue('asistente-evento-correo');
+                    var v_Telefono = getValue('asistente-evento-telefono');
+                    var v_IdEvento = Number(getValueSelect('asistente-evento-select')) || null;
+
+                    // Log para verificar los valores antes de la petición
+                    console.log("Valores a enviar:", {
+                        IdAsistente: v_IdAsistente,
+                        NombreAsistente: v_NombreAsistente,
+                        CorreoAsistente: v_CorreoAsistente,
+                        Telefono: v_Telefono,
+                        IdEvento: v_IdEvento
+                    });
+
+                    // Construir la URL con los parámetros
+                    let url = `${URLRestApi}api/setAsistentes?`;
+
+                    // Añadir los parámetros solo si no son null o vacíos
+                    if (v_IdAsistente !== null) {
+                        url += `IdAsistente=${encodeURIComponent(v_IdAsistente)}&`;
+                    }
+                    if (v_NombreAsistente !== "") {
+                        url += `NombreAsistente=${encodeURIComponent(v_NombreAsistente)}&`;
+                    }
+                    if (v_CorreoAsistente !== "") {
+                        url += `CorreoAsistente=${encodeURIComponent(v_CorreoAsistente)}&`;
+                    }
+                    if (v_Telefono !== "") {
+                        url += `Telefono=${encodeURIComponent(v_Telefono)}&`;
+                    }
+                    if (v_IdEvento !== null) {
+                        url += `IdEvento=${encodeURIComponent(v_IdEvento)}&`;
+                    }
+
+                    // Eliminar el último `&` si existe
+                    if (url.endsWith('&')) {
+                        url = url.slice(0, -1);
+                    }
+
+                    // Log para verificar la URL final
+                    console.log("URL final:", url);
+
+                    // Realizar la petición GET
+                    fetch(url, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json; charset=utf-8"
+                        }
+                    })
+                        .then((response) => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then((Data) => {
+                            try {
+                                if (Data != null) {
+                                    if (Data[0].Estado) {
+                                        SweetCompleteTopCenter(Data[0].Mensaje);
+                                        Reload();
+                                    } else {
+                                        SweetError(Data[0].Mensaje);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error("Error al procesar la respuesta:", e);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error:", error);
+                        });
+                } else {
+                    SweetError('Selecciona un evento.');
+                }
+            } else {
+                SweetError('El campo Teléfono se encuentra vacío.');
+            }
+        } else {
+            SweetError('El campo Correo se encuentra vacío.');
+        }
+    } else {
+        SweetError('El campo Nombre se encuentra vacío.');
+    }
+}
+
+
+
+function setDeleteAsistentes(IdAsistente,NombreAsistente) {
+    Swal.fire({
+        title: "¿Está seguro de que desea eliminar : " + NombreAsistente + "?",
+        text: '',
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(URLRestApi+ `api/setDeleteAsistentes?IdAsistente=${IdAsistente}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json; charset=utf-8"
+                }
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then((Data) => {
+                    try {
+                        if (Data != null) {
+                            if (Data[0].Estado) {
+                                SweetCompleteTopCenter(Data[0].Mensaje);
+                                Reload();
+                            } else {
+                                SweetError(Data[0].Mensaje);
+                            }
+                        }
+                    } catch (e) {
+                   
+                    }
+                    
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    // Opcional: SweetError("Ha ocurrido un error inesperado en la operación");
+                });
+        }
+    });
+}
+
+  </script>
   <body > 
     <div class="row">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3" style="background-color:#1e385d   ; padding-top: 0.3rem; padding-bottom: 0.3rem;">
@@ -295,7 +1233,6 @@
    </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://eventoscorporativos.netlify.app/src/js/Scripts.js"></script>
 
   </body>
 </html>
